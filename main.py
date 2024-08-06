@@ -17,6 +17,8 @@ class KeyBindTest:
         # options stuff
         self.texts: list[str] = ["Steer up", "Steer down", "Steer left", "Steer right"]
         self.collision_rects: list[pg.Rect] = [pg.Rect(350, 200 + i * 40, 100, 35) for i in range(4)]
+        self.index: int = None
+        self.new_key: str = ""
         
         # player settings
         self.player: pg.Surface = pg.Surface((50, 50))
@@ -57,34 +59,49 @@ class KeyBindTest:
             if event.type == pg.QUIT:
                 self.running = False
             
-            elif event.type == pg.KEYDOWN:
-                if event.key == self.key_up:
-                    self.pos.y -= self.speed
-                if event.key == self.key_down:
-                    self.pos.y += self.speed
-                if event.key == self.key_left:
-                    self.pos.x -= self.speed
-                if event.key == self.key_right:
-                    self.pos.x += self.speed
+            if self.state == "play":
+                if event.type == pg.KEYDOWN:
+                    if event.key == self.key_up:
+                        self.pos.y -= self.speed
+                    if event.key == self.key_down:
+                        self.pos.y += self.speed
+                    if event.key == self.key_left:
+                        self.pos.x -= self.speed
+                    if event.key == self.key_right:
+                        self.pos.x += self.speed
+            elif self.state == "change key":
+                if event.type == pg.KEYDOWN:
+                    new_key: str = pg.key.name(event.key)
+                    if len(new_key) > 1:
+                        self.new_key = "K_" + new_key.upper()
+                    else:
+                        self.new_key = "K_" + new_key
 
-    def change_key(self, index) -> None:
-        print("in")
-        match index:
+    def get_new_key(self) -> None:
+        if self.new_key != "":
+            self.change_key()
+        
+    def change_key(self) -> None:
+        match self.index:
             case 0:
-                pass
+                self.up = self.new_key
             case 1:
-                pass
+                self.down = self.new_key
             case 2:
-                pass
+                self.left = self.new_key
             case 3:
-                pass
+                self.right = self.new_key
+        self.index = 0
+        self.new_key = ""
+        self.bind_keys()
+        self.state = "options"
 
     def check_rect_collisions(self) -> None:
         for idx, rect in enumerate(self.collision_rects):
             if rect.collidepoint(pg.mouse.get_pos()):
                 if pg.mouse.get_pressed()[0]:
-                    self.szaze = "change key"
-                    self.change_key(idx)
+                    self.state = "change key"
+                    self.index = idx
 
     def draw_window(self) -> None:
         if self.state == "play":
@@ -110,9 +127,7 @@ class KeyBindTest:
             for rect in self.collision_rects:
                 pg.draw.rect(self.display, "white", rect, width=1)
 
-
         pg.display.update()
-
 
     def run(self) -> None:
         while self.running:
@@ -126,6 +141,8 @@ class KeyBindTest:
                 self.check_rect_collisions()
                 if self.back_button.check_collision():
                     self.state = "play"
+            elif self.state == "change key":
+                self.get_new_key()
 
 
 if __name__ == "__main__":
